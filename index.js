@@ -35,7 +35,7 @@ const BAN_LOG_CHANNEL = "1414298902768779264";
 const INVITE_LOG_CHANNEL = "1414298902768779264";
 const WELCOME_CHANNEL_ID = "1406405817527435377";
 const APPLICATION_LOG_CHANNEL = "1490870793599717426";
-const REVIEW_CHANNEL_ID = "1490592890706198551";
+const REVIEW_CHANNEL_ID = "1467652504970985614";
 const MIN_ACCOUNT_AGE_DAYS = 7;
 
 // ===== ROLES =====
@@ -45,8 +45,10 @@ const MOD_ROLE_ID = [
   "1449851163167031558"
 ];
 const DESIGNER_ROLE_ID = "1490110273267306496";
-const REVIEWER_ROLE_ID = "1490110273267306496";
-const STATUS_UPDATE_ROLE_ID = "1490110273267306496";
+const REVIEWER_ROLE_ID = "1480332217484972113";
+const STATUS_UPDATE_ROLE_ID = [
+  "1480331381275099186",
+  "1490541398875836536"
 
 // ===== TICKET SYSTEM =====
 const TICKET_PANEL_CHANNEL = "1449841354325889044";
@@ -796,12 +798,10 @@ client.on('interactionCreate', async interaction => {
     if (interaction.commandName === "review") {
       if (!interaction.member.roles.cache.has(REVIEWER_ROLE_ID))
         return interaction.reply({ content: "❌ You do not have permission to submit reviews.", flags: 64 });
-
       const product = interaction.options.getString("product");
       const designer = interaction.options.getString("designer");
       const rating = interaction.options.getString("rating");
       const image = interaction.options.getAttachment("image");
-
       const reviewEmbed = new EmbedBuilder()
         .setTitle(`New Review by ${interaction.user.username}`)
         .setDescription(`**${product}**\nDesigner: ${designer}`)
@@ -809,9 +809,7 @@ client.on('interactionCreate', async interaction => {
         .setColor("#2A5CFF")
         .setFooter({ text: `Reviewed by ${interaction.user.tag}` })
         .setTimestamp();
-
       if (image) reviewEmbed.setThumbnail(image.url);
-
       const reviewChannel = interaction.guild.channels.cache.get(REVIEW_CHANNEL_ID);
       if (!reviewChannel) return interaction.reply({ content: "❌ Review channel not found.", flags: 64 });
       await reviewChannel.send({ embeds: [reviewEmbed] });
@@ -822,7 +820,6 @@ client.on('interactionCreate', async interaction => {
     if (interaction.commandName === "status") {
       const entry = statusData[interaction.user.id];
       if (!entry) return interaction.reply({ content: "You don't have an order status set yet. Please open a ticket if you have an active order.", flags: 64 });
-
       const statusMap = { pending: "🟡 Pending", inprogress: "🔵 In Progress", completed: "✅ Completed" };
       const embed = new EmbedBuilder()
         .setTitle("Order Status")
@@ -835,14 +832,11 @@ client.on('interactionCreate', async interaction => {
     if (interaction.commandName === "statusupdate") {
       if (!interaction.member.roles.cache.has(STATUS_UPDATE_ROLE_ID))
         return interaction.reply({ content: "❌ You do not have permission to update statuses.", flags: 64 });
-
       const targetUser = interaction.options.getUser("user");
       const newStatus = interaction.options.getString("status");
       const statusMap = { pending: "🟡 Pending", inprogress: "🔵 In Progress", completed: "✅ Completed" };
-
       statusData[targetUser.id] = { status: newStatus, updatedAt: new Date().toLocaleString() };
       saveStatuses();
-
       await targetUser.send(`📦 Your order status has been updated!\n\n**Status:** ${statusMap[newStatus]}\n\nUse **/status** in the server to check it at any time.`).catch(() => {});
       return interaction.reply({ content: `✅ Updated ${targetUser.tag}'s status to **${statusMap[newStatus]}**.`, flags: 64 });
     }
